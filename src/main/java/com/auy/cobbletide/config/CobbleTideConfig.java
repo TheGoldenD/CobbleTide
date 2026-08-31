@@ -34,21 +34,18 @@ public final class CobbleTideConfig {
                 "256 = 1 in 256",
                 "1024 = 1 in 1024",
                 "",
-                "Cobblemon's normal shiny chance and bait effects",
-                "are processed before this bonus."
+                "Cobblemon's normal shiny chance and bait effects are processed before this bonus."
         );
         builder.push("perfect_shiny_bonus");
-        commonShinyDenominator = builder.defineInRange("common_denominator", 1024, 1, 10_000_000);
-        uncommonShinyDenominator = builder.defineInRange("uncommon_denominator", 768, 1, 10_000_000);
-        rareShinyDenominator = builder.defineInRange("rare_denominator", 512, 1, 10_000_000);
-        ultraRareShinyDenominator = builder.defineInRange("ultra_rare_denominator", 256, 1, 10_000_000);
+        commonShinyDenominator = builder.defineInRange("common", 1024, 1, 10_000_000);
+        uncommonShinyDenominator = builder.defineInRange("uncommon", 768, 1, 10_000_000);
+        rareShinyDenominator = builder.defineInRange("rare", 512, 1, 10_000_000);
+        ultraRareShinyDenominator = builder.defineInRange("ultra_rare", 256, 1, 10_000_000);
         builder.pop();
         builder.comment(
                 "Perfect-IV reward chances for PERFECT catches.",
-                "",
                 "These are exclusive percentage chances.",
                 "The strongest reward is checked first.",
-                "",
                 "Default:",
                 "1 IV  = 6%",
                 "2 IVs = 3%",
