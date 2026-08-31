@@ -1,25 +1,31 @@
+# CobbleTide
 
-Installation information
-=======
+CobbleTide is a NeoForge 1.21.1 compatibility mod that integrates Cobblemon's Poké Rod fishing with Tide's fishing mechanics.
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+## Features
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+- Tide-style charged casting for Poké Rods
+- Tide fishing minigame for Cobblemon catches
+- Difficulty based on fishing rarity
+- Multi-round fishing challenges
+  - Rare: 2 rounds
+  - Ultra Rare: 3 rounds
+  - Legendary: 4 rounds
+  - Mythical: 5 rounds
+- Randomized minigame patterns between rounds
+- Special visual and audio feedback between rounds
+- PERFECT catch bonuses for IVs and shiny chance
+- Cobblemon bait support
+- Tide-style Poké Rod tooltip
+- Multiplayer and dedicated server support
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+## Requirements
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+- Minecraft 1.21.1
+- NeoForge
+- Cobblemon
+- Tide
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+## Status
+
+CobbleTide is currently in early development.
