@@ -5,7 +5,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class PendingFishingSessions {
-    private static final Map<UUID, FishingSession> ACTIVE = new ConcurrentHashMap<>();
+
+    private static final Map<UUID, FishingSession> ACTIVE =
+            new ConcurrentHashMap<>();
 
     private PendingFishingSessions() {
     }
@@ -24,13 +26,22 @@ public final class PendingFishingSessions {
             String rarity,
             FishingChallengeType challengeType
     ) {
-        FishingSession session = new FishingSession(bobberId, rarity, challengeType);
+        FishingSession session = new FishingSession(
+                bobberId,
+                rarity,
+                challengeType
+        );
+
         ACTIVE.put(playerId, session);
         return session;
     }
 
-    public static void setResult(UUID playerId, FishingResult result) {
+    public static void setResult(
+            UUID playerId,
+            FishingResult result
+    ) {
         FishingSession session = ACTIVE.get(playerId);
+
         if (session != null) {
             session.setResult(result);
         }
@@ -40,8 +51,17 @@ public final class PendingFishingSessions {
         return ACTIVE.remove(playerId);
     }
 
-    public static boolean matchesBobber(UUID playerId, UUID bobberId) {
+    public static boolean matchesBobber(
+            UUID playerId,
+            UUID bobberId
+    ) {
         FishingSession session = ACTIVE.get(playerId);
-        return session != null && session.bobberId().equals(bobberId);
+
+        return session != null
+                && session.bobberId().equals(bobberId);
+    }
+
+    public static void clearAll() {
+        ACTIVE.clear();
     }
 }

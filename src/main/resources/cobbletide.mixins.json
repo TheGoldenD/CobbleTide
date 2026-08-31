@@ -1,22 +1,18 @@
 {
   "required": true,
-  "minVersion": "0.8",
   "package": "com.auy.cobbletide.mixin",
   "compatibilityLevel": "JAVA_21",
-
   "mixins": [
     "PokeBobberAccessor",
     "PokeBobberFreezeMixin",
     "PokeRodChargeMixin",
-    "TideMinigameServerMixin",
-    "TidePerfectZoneMixin"
+    "TideMinigameServerMixin"
   ],
-
   "client": [
     "PokeRodChargeClientMixin",
-    "TideHookAccessorMixin"
+    "TideHookAccessorMixin",
+    "TidePerfectZoneMixin"
   ],
-
   "injectors": {
     "defaultRequire": 1
   }
