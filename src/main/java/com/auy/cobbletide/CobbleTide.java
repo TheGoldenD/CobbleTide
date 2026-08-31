@@ -13,43 +13,13 @@ import org.slf4j.LoggerFactory;
 
 @Mod(CobbleTide.MOD_ID)
 public final class CobbleTide {
+    public static final String MOD_ID = "cobbletide";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public static final String MOD_ID =
-            "cobbletide";
-
-    public static final Logger LOGGER =
-            LoggerFactory.getLogger(
-                    MOD_ID
-            );
-
-    public CobbleTide(
-            ModContainer modContainer
-    ) {
-
-        LOGGER.info(
-                "CobbleTide is loading!"
-        );
-
-        /*
-         * PERFECT reward configuration:
-         *
-         * IV bonus
-         * shiny bonus
-         */
-        modContainer.registerConfig(
-                ModConfig.Type.COMMON,
-                CobbleTideConfig.SPEC
-        );
-
-        /*
-         * Cobblemon fishing integration.
-         */
+    public CobbleTide(ModContainer modContainer) {
+        LOGGER.info("CobbleTide is loading!");
+        modContainer.registerConfig(ModConfig.Type.COMMON, CobbleTideConfig.SPEC);
         CobblemonFishingBridge.register();
-
-        /*
-         * Handles the short pause between
-         * multi-round fishing challenges.
-         */
         FishingRoundTransitionManager.register();
     }
 }

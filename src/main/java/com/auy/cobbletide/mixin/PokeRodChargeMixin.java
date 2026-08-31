@@ -23,17 +23,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = PokerodItem.class, remap = false)
 public abstract class PokeRodChargeMixin extends FishingRodItem {
-
-    /*
-     * Prevents our call to PokerodItem.use() on release
-     * from starting another charge.
-     *
-     * ThreadLocal is important because integrated server and
-     * client run on separate threads.
-     */
-    private static final ThreadLocal<Boolean> COBBLETIDE_BYPASS =
-            ThreadLocal.withInitial(() -> false);
-
+    // Prevent releaseUsing() from recursively re-entering the use() injection.
+    private static final ThreadLocal<Boolean> COBBLETIDE_BYPASS = ThreadLocal.withInitial(() -> false);
     private static final int CHARGE_DURATION = 25;
     private static final int USE_DURATION = 60000;
 
@@ -41,10 +32,6 @@ public abstract class PokeRodChargeMixin extends FishingRodItem {
         super(properties);
     }
 
-    /*
-     * Replace Cobblemon's immediate cast with charging,
-     * but ONLY when there is no bobber already out.
-     */
     @Inject(
             method = "use",
             at = @At("HEAD"),
@@ -59,119 +46,49 @@ public abstract class PokeRodChargeMixin extends FishingRodItem {
         if (COBBLETIDE_BYPASS.get()) {
             return;
         }
-
-        /*
-         * Bobber already exists:
-         *
-         * Do NOT interfere.
-         *
-         * This lets the existing reel/minigame system continue working.
-         */
         if (player.fishing != null) {
             return;
         }
-
-        /*
-         * Respect Tide's own Hold To Cast setting.
-         */
         if (!Tide.SERVER_CONFIG.general.holdToCast) {
             return;
         }
-
         player.startUsingItem(hand);
-
-        cir.setReturnValue(
-                InteractionResultHolder.consume(
-                        player.getItemInHand(hand)
-                )
-        );
+        cir.setReturnValue(InteractionResultHolder.consume(player.getItemInHand(hand)));
     }
 
-    /*
-     * Called when right-click is released.
-     */
     @Override
-    public void releaseUsing(
-            ItemStack rod,
-            Level level,
-            LivingEntity user,
-            int timeLeft
-    ) {
+    public void releaseUsing(ItemStack rod, Level level, LivingEntity user, int timeLeft) {
         if (!(user instanceof Player player)) {
             return;
         }
-
         if (player.fishing != null) {
             return;
         }
-
         if (!Tide.SERVER_CONFIG.general.holdToCast) {
             return;
         }
-
-        int usedTicks =
-                USE_DURATION - timeLeft;
-
-        usedTicks = Math.min(
-                usedTicks,
-                CHARGE_DURATION
-        );
-
-        /*
-         * Same formula Tide uses:
-         *
-         * 0 ticks  = 0.5x
-         * ~12 ticks = 1.0x
-         * 25 ticks = 1.5x
-         */
-        float chargeMultiplier =
-                ((float) usedTicks / (float) CHARGE_DURATION)
-                        + 0.5f;
-
-        /*
-         * Only the server needs the actual launch multiplier.
-         */
+        int usedTicks = USE_DURATION - timeLeft;
+        usedTicks = Math.min(usedTicks, CHARGE_DURATION);
+        // Matches Tide's 0.5x-1.5x hold-to-cast curve.
+        float chargeMultiplier = ((float) usedTicks / (float) CHARGE_DURATION) + 0.5f;
         if (!level.isClientSide()) {
-            PendingCastCharge.set(
-                    player.getUUID(),
-                    chargeMultiplier
-            );
+            PendingCastCharge.set(player.getUUID(), chargeMultiplier);
         }
-
-        InteractionHand hand =
-                player.getUsedItemHand();
-
-        /*
-         * Now run Cobblemon's ORIGINAL casting code.
-         *
-         * Our bypass flag prevents our use() injection
-         * from starting another charge.
-         */
+        InteractionHand hand = player.getUsedItemHand();
         COBBLETIDE_BYPASS.set(true);
-
         try {
-            ((PokerodItem) (Object) this)
-                    .use(level, player, hand);
+            ((PokerodItem) (Object) this).use(level, player, hand);
         }
         finally {
             COBBLETIDE_BYPASS.set(false);
         }
     }
 
-    /*
-     * Allows the rod to remain held while charging.
-     */
     @Override
-    public int getUseDuration(
-            ItemStack stack,
-            LivingEntity entity
-    ) {
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return USE_DURATION;
     }
 
-    /*
-     * Same animation Tide uses.
-     */
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.BOW;

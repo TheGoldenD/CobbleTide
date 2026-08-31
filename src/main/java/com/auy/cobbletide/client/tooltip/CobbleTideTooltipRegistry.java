@@ -13,23 +13,12 @@ import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactori
         bus = EventBusSubscriber.Bus.MOD
 )
 public final class CobbleTideTooltipRegistry {
-
     private CobbleTideTooltipRegistry() {
     }
 
     @SubscribeEvent
-    public static void registerTooltipComponents(
-            RegisterClientTooltipComponentFactoriesEvent event
-    ) {
-
-        event.register(
-                CobbleTideBaitTooltip.class,
-                CobbleTideBaitTooltipClient::new
-        );
-
-        event.register(
-                CobbleTideSpacerTooltip.class,
-                CobbleTideSpacerTooltipClient::new
-        );
+    public static void registerTooltipComponents(RegisterClientTooltipComponentFactoriesEvent event) {
+        event.register(CobbleTideBaitTooltip.class, CobbleTideBaitTooltipClient::new);
+        event.register(CobbleTideSpacerTooltip.class, CobbleTideSpacerTooltipClient::new);
     }
 }

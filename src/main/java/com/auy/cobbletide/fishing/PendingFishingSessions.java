@@ -5,29 +5,17 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class PendingFishingSessions {
-
-    private static final Map<UUID, FishingSession> ACTIVE =
-            new ConcurrentHashMap<>();
+    private static final Map<UUID, FishingSession> ACTIVE = new ConcurrentHashMap<>();
 
     private PendingFishingSessions() {
     }
 
-    public static boolean isActive(
-            UUID playerId
-    ) {
-
-        return ACTIVE.containsKey(
-                playerId
-        );
+    public static boolean isActive(UUID playerId) {
+        return ACTIVE.containsKey(playerId);
     }
 
-    public static FishingSession get(
-            UUID playerId
-    ) {
-
-        return ACTIVE.get(
-                playerId
-        );
+    public static FishingSession get(UUID playerId) {
+        return ACTIVE.get(playerId);
     }
 
     public static FishingSession start(
@@ -36,65 +24,24 @@ public final class PendingFishingSessions {
             String rarity,
             FishingChallengeType challengeType
     ) {
-
-        FishingSession session =
-                new FishingSession(
-                        bobberId,
-                        rarity,
-                        challengeType
-                );
-
-        ACTIVE.put(
-                playerId,
-                session
-        );
-
+        FishingSession session = new FishingSession(bobberId, rarity, challengeType);
+        ACTIVE.put(playerId, session);
         return session;
     }
 
-    /*
-     * Keep this because some of our other code may
-     * still find it convenient.
-     */
-    public static void setResult(
-            UUID playerId,
-            FishingResult result
-    ) {
-
-        FishingSession session =
-                ACTIVE.get(
-                        playerId
-                );
-
+    public static void setResult(UUID playerId, FishingResult result) {
+        FishingSession session = ACTIVE.get(playerId);
         if (session != null) {
             session.setResult(result);
         }
     }
 
-    public static FishingSession finish(
-            UUID playerId
-    ) {
-
-        return ACTIVE.remove(
-                playerId
-        );
+    public static FishingSession finish(UUID playerId) {
+        return ACTIVE.remove(playerId);
     }
 
-    public static boolean matchesBobber(
-            UUID playerId,
-            UUID bobberId
-    ) {
-
-        FishingSession session =
-                ACTIVE.get(
-                        playerId
-                );
-
-        return session != null
-                && session
-                .bobberId()
-                .equals(
-                        bobberId
-                );
+    public static boolean matchesBobber(UUID playerId, UUID bobberId) {
+        FishingSession session = ACTIVE.get(playerId);
+        return session != null && session.bobberId().equals(bobberId);
     }
 }

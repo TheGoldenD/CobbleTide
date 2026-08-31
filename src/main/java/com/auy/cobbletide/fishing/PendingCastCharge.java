@@ -5,9 +5,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class PendingCastCharge {
-
-    private static final Map<UUID, Float> CHARGES =
-            new ConcurrentHashMap<>();
+    private static final Map<UUID, Float> CHARGES = new ConcurrentHashMap<>();
 
     private PendingCastCharge() {
     }
@@ -18,7 +16,6 @@ public final class PendingCastCharge {
 
     public static float consume(UUID playerId) {
         Float value = CHARGES.remove(playerId);
-
         return value != null ? value : 1.0f;
     }
 }

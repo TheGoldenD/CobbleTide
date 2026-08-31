@@ -17,35 +17,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         remap = false
 )
 public abstract class PokeBobberFreezeMixin {
-
     @Inject(
             method = "tickFishingLogic",
             at = @At("HEAD"),
             cancellable = true
     )
-    private void cobbletide$freezeFishing(
-            BlockPos pos,
-            CallbackInfo ci
-    ) {
-
-        PokeRodFishingBobberEntity bobber =
-                (PokeRodFishingBobberEntity)
-                        (Object) this;
-
-        if (!(bobber.getOwner()
-                instanceof Player player)) {
-
+    private void cobbletide$freezeFishing(BlockPos pos, CallbackInfo ci) {
+        PokeRodFishingBobberEntity bobber = (PokeRodFishingBobberEntity) (Object) this;
+        if (!(bobber.getOwner() instanceof Player player)) {
             return;
         }
-
-        if (PendingFishingSessions.isActive(
-                player.getUUID()
-        )) {
-
-            /*
-             * Prevent Cobblemon's bite timer from expiring
-             * while the Tide game is active.
-             */
+        if (PendingFishingSessions.isActive(player.getUUID())) {
             ci.cancel();
         }
     }

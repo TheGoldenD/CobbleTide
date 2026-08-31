@@ -5,12 +5,9 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 
 public final class CobbleTideSpacerTooltipClient
         implements ClientTooltipComponent {
-
     private final int height;
 
-    public CobbleTideSpacerTooltipClient(
-            CobbleTideSpacerTooltip tooltip
-    ) {
+    public CobbleTideSpacerTooltipClient(CobbleTideSpacerTooltip tooltip) {
         this.height = tooltip.height();
     }
 

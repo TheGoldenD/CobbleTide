@@ -17,40 +17,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         remap = false
 )
 public abstract class TideHookAccessorMixin {
-
     @Inject(
             method = "bobberRemoved",
             at = @At("HEAD"),
             cancellable = true
     )
-    private static void cobbletide$acceptPokeRod(
-            Player player,
-            CallbackInfoReturnable<Boolean> cir
-    ) {
-
+    private static void cobbletide$acceptPokeRod(Player player, CallbackInfoReturnable<Boolean> cir) {
         if (player == null) {
             return;
         }
-
         if (!CatchMinigameOverlay.isActive()) {
             return;
         }
-
-        /*
-         * player.fishing is NOT reliable enough on the client
-         * for Cobblemon's custom bobber.
-         *
-         * Instead, while Tide's overlay is active and the player
-         * is holding a PokerodItem, tell Tide that the bobber
-         * still exists.
-         */
+        // Cobblemon's custom bobber is not reliably exposed through player.fishing client-side.
         boolean holdingPokeRod =
                 player.getMainHandItem().getItem()
                         instanceof PokerodItem
                         ||
                         player.getOffhandItem().getItem()
                                 instanceof PokerodItem;
-
         if (holdingPokeRod) {
             cir.setReturnValue(false);
         }

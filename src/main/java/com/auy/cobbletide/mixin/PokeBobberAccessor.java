@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
         remap = false
 )
 public interface PokeBobberAccessor {
-
     @Accessor("caughtFish")
     boolean cobbletide$hasCaughtFish();
 }
