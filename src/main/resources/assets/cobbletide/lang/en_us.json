@@ -1,0 +1,11 @@
+{
+  "itemGroup.cobbletide": "Example Mod Tab",
+  "block.cobbletide.example_block": "Example Block",
+  "item.cobbletide.example_item": "Example Item",
+
+  "cobbletide.configuration.title": "CobbleTide Configs",
+  "cobbletide.configuration.section.cobbletide.common.toml": "CobbleTide Configs",
+  "cobbletide.configuration.section.cobbletide.common.toml.title": "CobbleTide Configs",
+  "cobbletide.tooltip.bait_slots": "Bait slots (right click to fill)",
+  "cobbletide.tooltip.accessories": "Accessories:"
+}

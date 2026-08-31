@@ -1,0 +1,25 @@
+# Gradle
+.gradle/
+build/
+
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# Minecraft / NeoForge dev runtime
+run/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Crash reports
+crash-reports/
+
+# Temporary files
+*.tmp
