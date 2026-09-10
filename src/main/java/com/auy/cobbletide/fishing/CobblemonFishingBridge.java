@@ -3,6 +3,7 @@ package com.auy.cobbletide.fishing;
 import com.auy.cobbletide.CobbleTide;
 import com.auy.cobbletide.mixin.PokeBobberAccessor;
 
+import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.api.events.fishing.BobberSpawnPokemonEvent;
@@ -22,6 +23,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Locale;
 
 public final class CobblemonFishingBridge {
+
     private static boolean registered = false;
 
     private CobblemonFishingBridge() {
@@ -31,184 +33,475 @@ public final class CobblemonFishingBridge {
         if (registered) {
             return;
         }
-        registered = true;
-        CobblemonEvents.POKEROD_CAST_PRE.subscribe(Priority.HIGHEST, CobblemonFishingBridge::onPokerodCast);
-        CobblemonEvents.POKEROD_REEL.subscribe(Priority.HIGHEST, CobblemonFishingBridge::onPokerodReel);
-        CobblemonEvents.BOBBER_SPAWN_POKEMON_POST.subscribe(Priority.NORMAL, CobblemonFishingBridge::onPokemonSpawned);
-        CobbleTide.LOGGER.info("Registered Cobblemon fishing compatibility");
-    }
 
-    private static void onPokerodCast(PokerodCastEvent.Pre event) {
-        PokeRodFishingBobberEntity bobber = event.getBobber();
-        if (!(bobber.getOwner() instanceof Player player)) {
-            return;
-        }
-        float multiplier = PendingCastCharge.consume(player.getUUID());
-        Vec3 originalVelocity = bobber.getDeltaMovement();
-        Vec3 chargedVelocity = originalVelocity.scale(multiplier);
-        bobber.setDeltaMovement(chargedVelocity);
+        registered = true;
+
+        CobblemonEvents.POKEROD_CAST_PRE.subscribe(
+                Priority.HIGHEST,
+                CobblemonFishingBridge::onPokerodCast
+        );
+
+        CobblemonEvents.POKEROD_REEL.subscribe(
+                Priority.HIGHEST,
+                CobblemonFishingBridge::onPokerodReel
+        );
+
+        CobblemonEvents.BOBBER_SPAWN_POKEMON_POST.subscribe(
+                Priority.NORMAL,
+                CobblemonFishingBridge::onPokemonSpawned
+        );
+
         CobbleTide.LOGGER.info(
-                "Poké Rod cast | Player={} | Charge={}x | Speed={} -> {}",
-                player.getName().getString(),
-                String.format("%.2f", multiplier),
-                String.format("%.3f", originalVelocity.length()),
-                String.format("%.3f", chargedVelocity.length())
+                "Registered Cobblemon fishing compatibility"
         );
     }
 
-    private static void onPokerodReel(PokerodReelEvent event) {
-        Player player = event.getPlayer();
+    private static void onPokerodCast(
+            PokerodCastEvent.Pre event
+    ) {
+        PokeRodFishingBobberEntity bobber =
+                event.getBobber();
+
+        if (!(bobber.getOwner() instanceof Player player)) {
+            return;
+        }
+
+        float multiplier =
+                PendingCastCharge.consume(
+                        player.getUUID()
+                );
+
+        Vec3 originalVelocity =
+                bobber.getDeltaMovement();
+
+        Vec3 chargedVelocity =
+                originalVelocity.scale(
+                        multiplier
+                );
+
+        bobber.setDeltaMovement(
+                chargedVelocity
+        );
+
+        CobbleTide.LOGGER.debug(
+                "Poké Rod cast | Player={} | Charge={}x",
+                player.getName().getString(),
+                multiplier
+        );
+    }
+
+    private static void onPokerodReel(
+            PokerodReelEvent event
+    ) {
+        Player player =
+                event.getPlayer();
+
         if (player.level().isClientSide()) {
             return;
         }
-        if (!(player.fishing instanceof PokeRodFishingBobberEntity bobber)) {
+
+        if (!(player.fishing
+                instanceof PokeRodFishingBobberEntity bobber)) {
             return;
         }
-        boolean hasCatch = ((PokeBobberAccessor) (Object) bobber).cobbletide$hasCaughtFish();
+
+        boolean hasCatch =
+                ((PokeBobberAccessor) (Object) bobber)
+                        .cobbletide$hasCaughtFish();
+
         if (!hasCatch) {
-            CobbleTide.LOGGER.info("Normal Poké Rod reel - nothing has bitten");
             return;
         }
+
         event.cancel();
-        if (PendingFishingSessions.isActive(player.getUUID())) {
-            CobbleTide.LOGGER.info(
-                    "Ignoring extra reel - fishing challenge already active for {}",
-                    player.getName().getString()
-            );
+
+        if (PendingFishingSessions.isActive(
+                player.getUUID()
+        )) {
             return;
         }
-        SpawnAction<?> plannedSpawn = bobber.getPlannedSpawnAction();
-        String rarity = getRarity(plannedSpawn);
-        FishingChallengeType challengeType = determineChallengeType(plannedSpawn, rarity);
+
+        SpawnAction<?> plannedSpawn =
+                bobber.getPlannedSpawnAction();
+
+        String rarity =
+                getRarity(
+                        plannedSpawn
+                );
+
+        FishingChallengeType challengeType =
+                determineChallengeType(
+                        plannedSpawn,
+                        rarity
+                );
+
+        SizeDifficulty sizeDifficulty =
+                prepareSizeDifficulty(
+                        plannedSpawn,
+                        bobber
+                );
+
         FishingSession session =
-                PendingFishingSessions.start(player.getUUID(), bobber.getUUID(), rarity, challengeType);
-        String plannedSpecies = getPlannedSpeciesName(plannedSpawn);
-        CobbleTide.LOGGER.info(
+                PendingFishingSessions.start(
+                        player.getUUID(),
+                        bobber.getUUID(),
+                        rarity,
+                        challengeType,
+                        sizeDifficulty.scale(),
+                        sizeDifficulty.areaMultiplier(),
+                        sizeDifficulty.alpha()
+                );
+
+        CobbleTide.LOGGER.debug(
                 "Fishing challenge created | " +
                         "Player={} | " +
                         "Pokemon={} | " +
                         "Rarity={} | " +
                         "Challenge={} | " +
-                        "Rounds={}",
+                        "Rounds={} | " +
+                        "Scale={} | " +
+                        "AreaMultiplier={} | " +
+                        "Alpha={}",
                 player.getName().getString(),
-                plannedSpecies,
+                getPlannedSpeciesName(plannedSpawn),
                 rarity,
                 challengeType,
-                session.totalRounds()
+                session.totalRounds(),
+                sizeDifficulty.scale(),
+                sizeDifficulty.areaMultiplier(),
+                sizeDifficulty.alpha()
         );
+
         if (player instanceof ServerPlayer serverPlayer) {
-            FishingChallengeManager.startCurrentRound(serverPlayer, bobber, session);
+            FishingChallengeManager.startCurrentRound(
+                    serverPlayer,
+                    bobber,
+                    session
+            );
         }
     }
 
-    private static FishingChallengeType determineChallengeType(SpawnAction<?> plannedSpawn, String rarity) {
+    private static SizeDifficulty prepareSizeDifficulty(
+            SpawnAction<?> plannedSpawn,
+            PokeRodFishingBobberEntity bobber
+    ) {
+        if (!(plannedSpawn
+                instanceof PokemonSpawnAction pokemonSpawn)) {
+
+            return SizeDifficulty.NORMAL;
+        }
+
+        Boolean alphaValue =
+                pokemonSpawn
+                        .getProps()
+                        .isAlpha();
+
+        boolean alpha =
+                Boolean.TRUE.equals(
+                        alphaValue
+                );
+
+        if (alpha) {
+            return new SizeDifficulty(
+                    1.0F,
+                    0.85F,
+                    true
+            );
+        }
+
+        Float scale =
+                pokemonSpawn
+                        .getProps()
+                        .getScaleModifier();
+
+        if (scale == null) {
+            float minimum =
+                    Cobblemon.INSTANCE
+                            .getConfig()
+                            .getPokemonIntrinsicSizeMin();
+
+            float maximum =
+                    Cobblemon.INSTANCE
+                            .getConfig()
+                            .getPokemonIntrinsicSizeMax();
+
+            float rawScale =
+                    minimum
+                            + bobber.getRandom().nextFloat()
+                            * (maximum - minimum);
+
+            scale =
+                    roundIntrinsicScale(
+                            rawScale
+                    );
+
+            /*
+             * Setting this now is important.
+             *
+             * Cobblemon only rolls intrinsic scale when
+             * PokemonProperties.scaleModifier is null.
+             * Therefore the Pokémon we eventually reel up
+             * keeps this exact size.
+             */
+            pokemonSpawn
+                    .getProps()
+                    .setScaleModifier(
+                            scale
+                    );
+        }
+
+        return new SizeDifficulty(
+                scale,
+                getAreaMultiplierForScale(scale),
+                false
+        );
+    }
+
+    private static float roundIntrinsicScale(
+            float scale
+    ) {
+        float deltaPercent =
+                (scale - 1.0F) * 100.0F;
+
+        float roundedPercent =
+                Math.round(deltaPercent * 10.0F)
+                        / 10.0F;
+
+        return 1.0F
+                + roundedPercent / 100.0F;
+    }
+
+    private static float getAreaMultiplierForScale(
+            float scale
+    ) {
+        if (scale <= 0.96F) {
+            return 1.08F;
+        }
+
+        if (scale < 0.99F) {
+            return 1.04F;
+        }
+
+        if (scale <= 1.01F) {
+            return 1.00F;
+        }
+
+        if (scale < 1.04F) {
+            return 0.96F;
+        }
+
+        return 0.92F;
+    }
+
+    private static FishingChallengeType determineChallengeType(
+            SpawnAction<?> plannedSpawn,
+            String rarity
+    ) {
         // Mythical/legendary labels override the normal fishing rarity.
-        Species species = getPlannedSpecies(plannedSpawn);
+        Species species =
+                getPlannedSpecies(
+                        plannedSpawn
+                );
+
         if (species != null) {
-            if (species.getLabels().contains("mythical")) {
+            if (species
+                    .getLabels()
+                    .contains("mythical")) {
+
                 return FishingChallengeType.MYTHICAL;
             }
-            if (species.getLabels().contains("legendary")) {
+
+            if (species
+                    .getLabels()
+                    .contains("legendary")) {
+
                 return FishingChallengeType.LEGENDARY;
             }
         }
+
         if ("ultra-rare".equals(rarity)) {
             return FishingChallengeType.ULTRA_RARE;
         }
+
         if ("rare".equals(rarity)) {
             return FishingChallengeType.RARE;
         }
+
         return FishingChallengeType.NORMAL;
     }
 
-    private static Species getPlannedSpecies(SpawnAction<?> plannedSpawn) {
-        if (!(plannedSpawn instanceof PokemonSpawnAction pokemonSpawn)) {
+    private static Species getPlannedSpecies(
+            SpawnAction<?> plannedSpawn
+    ) {
+        if (!(plannedSpawn
+                instanceof PokemonSpawnAction pokemonSpawn)) {
+
             return null;
         }
-        String speciesName = pokemonSpawn.getProps().getSpecies();
-        if (speciesName == null || speciesName.isBlank() || speciesName.equalsIgnoreCase("random")) {
+
+        String speciesName =
+                pokemonSpawn
+                        .getProps()
+                        .getSpecies();
+
+        if (speciesName == null
+                || speciesName.isBlank()
+                || speciesName.equalsIgnoreCase("random")) {
+
             return null;
         }
+
         if (!speciesName.contains(":")) {
-            return PokemonSpecies.getByName(speciesName);
+            return PokemonSpecies.getByName(
+                    speciesName
+            );
         }
-        ResourceLocation identifier = ResourceLocation.tryParse(speciesName);
+
+        ResourceLocation identifier =
+                ResourceLocation.tryParse(
+                        speciesName
+                );
+
         if (identifier == null) {
-            CobbleTide.LOGGER.warn("Could not parse planned Pokémon identifier: {}", speciesName);
+            CobbleTide.LOGGER.warn(
+                    "Could not parse planned Pokémon identifier: {}",
+                    speciesName
+            );
+
             return null;
         }
-        return PokemonSpecies.getByIdentifier(identifier);
+
+        return PokemonSpecies.getByIdentifier(
+                identifier
+        );
     }
 
-    private static String getPlannedSpeciesName(SpawnAction<?> plannedSpawn) {
-        if (!(plannedSpawn instanceof PokemonSpawnAction pokemonSpawn)) {
+    private static String getPlannedSpeciesName(
+            SpawnAction<?> plannedSpawn
+    ) {
+        if (!(plannedSpawn
+                instanceof PokemonSpawnAction pokemonSpawn)) {
+
             return "item";
         }
-        String species = pokemonSpawn.getProps().getSpecies();
-        if (species == null || species.isBlank()) {
+
+        String species =
+                pokemonSpawn
+                        .getProps()
+                        .getSpecies();
+
+        if (species == null
+                || species.isBlank()) {
+
             return "unknown";
         }
+
         return species;
     }
 
-    private static String getRarity(SpawnAction<?> plannedSpawn) {
+    private static String getRarity(
+            SpawnAction<?> plannedSpawn
+    ) {
         if (plannedSpawn == null) {
             return "item";
         }
-        String rarity = plannedSpawn.getBucket().getName();
-        if (rarity == null) {
+
+        String rarity =
+                plannedSpawn.getBucket();
+
+        if (rarity == null
+                || rarity.isBlank()) {
+
             return "custom";
         }
-        return rarity.toLowerCase(Locale.ROOT);
+
+        return rarity.toLowerCase(
+                Locale.ROOT
+        );
     }
 
-    private static void onPokemonSpawned(BobberSpawnPokemonEvent.Post event) {
-        if (!(event.getBobber().getOwner() instanceof ServerPlayer player)) {
+    private static void onPokemonSpawned(
+            BobberSpawnPokemonEvent.Post event
+    ) {
+        if (!(event
+                .getBobber()
+                .getOwner()
+                instanceof ServerPlayer player)) {
+
             return;
         }
-        FishingSession session = PendingFishingSessions.get(player.getUUID());
+
+        FishingSession session =
+                PendingFishingSessions.get(
+                        player.getUUID()
+                );
+
         if (session == null) {
             return;
         }
-        if (!session.bobberId().equals(event.getBobber().getUUID())) {
+
+        if (!session
+                .bobberId()
+                .equals(
+                        event
+                                .getBobber()
+                                .getUUID()
+                )) {
+
             return;
         }
+
         try {
-            if (session.result() == FishingResult.SUCCESS) {
-                CobbleTide.LOGGER.info(
-                        "Fishing challenge completed | " +
-                                "Player={} | " +
-                                "Pokemon={} | " +
-                                "Rarity={} | " +
-                                "Challenge={} | " +
-                                "Rounds={} | " +
-                                "Result=SUCCESS",
-                        player.getName().getString(),
-                        event.getPokemon().getPokemon().getSpecies().getName(),
-                        session.rarity(),
-                        session.challengeType(),
-                        session.totalRounds()
-                );
+            var pokemon =
+                    event
+                            .getPokemon()
+                            .getPokemon();
+
+            CobbleTide.LOGGER.debug(
+                    "Fishing Pokémon spawned | " +
+                            "Pokemon={} | " +
+                            "Scale={} | " +
+                            "ExpectedScale={} | " +
+                            "Alpha={}",
+                    pokemon.getSpecies().getName(),
+                    pokemon.getScaleModifier(),
+                    session.pokemonScale(),
+                    pokemon.isAlpha()
+            );
+
+            if (session.result()
+                    == FishingResult.SUCCESS) {
+
                 return;
             }
-            if (session.result() == FishingResult.PERFECT) {
-                CobbleTide.LOGGER.info(
-                        "Fishing challenge PERFECT | " +
-                                "Player={} | " +
-                                "Pokemon={} | " +
-                                "Rarity={} | " +
-                                "Challenge={} | " +
-                                "Rounds={}",
-                        player.getName().getString(),
-                        event.getPokemon().getPokemon().getSpecies().getName(),
-                        session.rarity(),
-                        session.challengeType(),
-                        session.totalRounds()
+
+            if (session.result()
+                    == FishingResult.PERFECT) {
+
+                PerfectCatchBonus.apply(
+                        player,
+                        pokemon,
+                        session.rarity()
                 );
-                PerfectCatchBonus.apply(player, event.getPokemon().getPokemon(), session.rarity());
             }
+
         } finally {
-            PendingFishingSessions.finish(player.getUUID());
+            PendingFishingSessions.finish(
+                    player.getUUID()
+            );
         }
+    }
+
+    private record SizeDifficulty(
+            float scale,
+            float areaMultiplier,
+            boolean alpha
+    ) {
+        private static final SizeDifficulty NORMAL =
+                new SizeDifficulty(
+                        1.0F,
+                        1.0F,
+                        false
+                );
     }
 }

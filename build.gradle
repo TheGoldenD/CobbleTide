@@ -76,11 +76,15 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 dependencies {
-    // Cobblemon 1.7.3 - NeoForge 1.21.1
-    implementation "curse.maven:cobblemon-687131:7553231"
+    // Cobblemon 1.8.0 - NeoForge 1.21.1
+    implementation "curse.maven:cobblemon-687131:8818732"
+
+    // Required by Cobblemon
     implementation "thedarkcolour:kotlinforforge-neoforge:5.11.0"
+
     // Tide 2.1.1 - NeoForge 1.21.1
     implementation "maven.modrinth:die1AF7i:1ki6UyqV"
+
     // Tide dependencies
     implementation "curse.maven:cloth-config-348521:5729127"
     implementation "curse.maven:curios-309927:6529130"

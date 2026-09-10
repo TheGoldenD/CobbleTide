@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Locale;
 
 public final class FishingChallengeManager {
+
     private FishingChallengeManager() {
     }
 
@@ -82,29 +83,54 @@ public final class FishingChallengeManager {
             PokeRodFishingBobberEntity bobber,
             FishingSession session
     ) {
-        FishingChallengePreset preset = selectPreset(session, bobber.getRandom());
-        session.setLastBehaviorName(preset.behavior().name());
+        FishingChallengePreset preset =
+                selectPreset(
+                        session,
+                        bobber.getRandom()
+                );
+
+        session.setLastBehaviorName(
+                preset.behavior().name()
+        );
+
+        float adjustedArea =
+                clampArea(
+                        preset.area()
+                                * session.sizeAreaMultiplier()
+                );
+
         Tide.NETWORK.sendToPlayer(
                 new MinigameClientMsg(
                         (byte) 0,
                         (byte) 0,
-                        (byte) preset.behavior().ordinal(),
-                        preset.area(),
+                        (byte) preset
+                                .behavior()
+                                .ordinal(),
+                        adjustedArea,
                         preset.speed()
                 ),
                 player
         );
+
         if (session.challengeType().isMultiRound()) {
-            player.displayClientMessage(buildRoundMessage(session), true);
+            player.displayClientMessage(
+                    buildRoundMessage(
+                            session
+                    ),
+                    true
+            );
         }
-        CobbleTide.LOGGER.info(
-                "Fishing challenge round started | " +
+
+        CobbleTide.LOGGER.debug(
+                "Fishing round started | " +
                         "Player={} | " +
                         "Type={} | " +
                         "Round={}/{} | " +
                         "Preset={} | " +
                         "Pattern={} | " +
-                        "Area={} | " +
+                        "BaseArea={} | " +
+                        "AdjustedArea={} | " +
+                        "Scale={} | " +
                         "Speed={}",
                 player.getName().getString(),
                 session.challengeType(),
@@ -113,23 +139,70 @@ public final class FishingChallengeManager {
                 preset.name(),
                 preset.behavior(),
                 preset.area(),
+                adjustedArea,
+                session.pokemonScale(),
                 preset.speed()
         );
     }
 
-    private static FishingChallengePreset selectPreset(FishingSession session, RandomSource random) {
-        if (session.challengeType() == FishingChallengeType.NORMAL) {
-            return selectNormalPreset(session.rarity(), random);
-        }
-        List<FishingChallengePreset> pool = getChallengePool(session);
-        return pickWithoutRepeatingBehavior(pool, session.lastBehaviorName(), random);
+    private static float clampArea(
+            float area
+    ) {
+        return Math.max(
+                0.05F,
+                Math.min(
+                        0.95F,
+                        area
+                )
+        );
     }
 
-    private static FishingChallengePreset selectNormalPreset(String rarity, RandomSource random) {
-        String normalized = rarity == null ? "item" : rarity.toLowerCase(Locale.ROOT);
+    private static FishingChallengePreset selectPreset(
+            FishingSession session,
+            RandomSource random
+    ) {
+        if (session.challengeType()
+                == FishingChallengeType.NORMAL) {
+
+            return selectNormalPreset(
+                    session.rarity(),
+                    random
+            );
+        }
+
+        List<FishingChallengePreset> pool =
+                getChallengePool(
+                        session
+                );
+
+        return pickWithoutRepeatingBehavior(
+                pool,
+                session.lastBehaviorName(),
+                random
+        );
+    }
+
+    private static FishingChallengePreset selectNormalPreset(
+            String rarity,
+            RandomSource random
+    ) {
+        String normalized =
+                rarity == null
+                        ? "item"
+                        : rarity.toLowerCase(
+                        Locale.ROOT
+                );
+
         return switch (normalized) {
+
             case "common" ->
-                    new FishingChallengePreset("common_sine", MinigameBehavior.SINE, 0.55f, 0.045f);
+                    new FishingChallengePreset(
+                            "common_sine",
+                            MinigameBehavior.SINE,
+                            0.55f,
+                            0.045f
+                    );
+
             case "uncommon" ->
                     new FishingChallengePreset(
                             "uncommon",
@@ -139,59 +212,98 @@ public final class FishingChallengeManager {
                             0.42f,
                             0.060f
                     );
+
             case "rare" ->
-                    new FishingChallengePreset("rare_fallback", MinigameBehavior.DARTS, 0.28f, 0.080f);
+                    new FishingChallengePreset(
+                            "rare_fallback",
+                            MinigameBehavior.DARTS,
+                            0.28f,
+                            0.080f
+                    );
+
             case "item" ->
-                    new FishingChallengePreset("item", MinigameBehavior.SINE, 0.55f, 0.045f);
+                    new FishingChallengePreset(
+                            "item",
+                            MinigameBehavior.SINE,
+                            0.55f,
+                            0.045f
+                    );
+
             default ->
-                    new FishingChallengePreset("custom", MinigameBehavior.LINEAR, 0.40f, 0.065f);
+                    new FishingChallengePreset(
+                            "custom",
+                            MinigameBehavior.LINEAR,
+                            0.40f,
+                            0.065f
+                    );
         };
     }
 
-    private static List<FishingChallengePreset> getChallengePool(FishingSession session) {
-        int round = session.currentRound();
-        return switch (session.challengeType()) {
+    private static List<FishingChallengePreset> getChallengePool(
+            FishingSession session
+    ) {
+        int round =
+                session.currentRound();
+
+        return switch (
+                session.challengeType()
+                ) {
+
             case RARE -> {
                 if (round == 1) {
                     yield ULTRA_EARLY;
                 }
+
                 yield ULTRA_FINAL;
             }
+
             case ULTRA_RARE -> {
                 if (round == 1) {
                     yield ULTRA_EARLY;
                 }
+
                 if (round == 2) {
                     yield BOSS_MID;
                 }
+
                 yield ULTRA_FINAL;
             }
-            case LEGENDARY -> {
-                yield switch (round) {
-                    case 1 ->
-                            BOSS_EARLY;
-                    case 2 ->
-                            BOSS_MID;
-                    case 3 ->
-                            BOSS_HARD;
-                    default ->
-                            BOSS_FINAL;
-                };
-            }
-            case MYTHICAL -> {
-                yield switch (round) {
-                    case 1 ->
-                            BOSS_EARLY;
-                    case 2 ->
-                            BOSS_MID;
-                    case 3 ->
-                            BOSS_HARD;
-                    case 4 ->
-                            BOSS_FINAL;
-                    default ->
-                            MYTHICAL_FINAL;
-                };
-            }
+
+            case LEGENDARY ->
+                    switch (round) {
+
+                        case 1 ->
+                                BOSS_EARLY;
+
+                        case 2 ->
+                                BOSS_MID;
+
+                        case 3 ->
+                                BOSS_HARD;
+
+                        default ->
+                                BOSS_FINAL;
+                    };
+
+            case MYTHICAL ->
+                    switch (round) {
+
+                        case 1 ->
+                                BOSS_EARLY;
+
+                        case 2 ->
+                                BOSS_MID;
+
+                        case 3 ->
+                                BOSS_HARD;
+
+                        case 4 ->
+                                BOSS_FINAL;
+
+                        default ->
+                                MYTHICAL_FINAL;
+                    };
+
             case NORMAL ->
                     BOSS_EARLY;
         };
@@ -203,47 +315,98 @@ public final class FishingChallengeManager {
             RandomSource random
     ) {
         if (previousBehavior == null) {
-            return pool.get(random.nextInt(pool.size()));
+            return pool.get(
+                    random.nextInt(
+                            pool.size()
+                    )
+            );
         }
-        List<FishingChallengePreset> candidates = new ArrayList<>();
+
+        List<FishingChallengePreset> candidates =
+                new ArrayList<>();
+
         for (FishingChallengePreset preset : pool) {
-            if (!preset.behavior().name().equals(previousBehavior)) {
-                candidates.add(preset);
+            if (!preset
+                    .behavior()
+                    .name()
+                    .equals(
+                            previousBehavior
+                    )) {
+
+                candidates.add(
+                        preset
+                );
             }
         }
+
         if (candidates.isEmpty()) {
-            candidates.addAll(pool);
+            candidates.addAll(
+                    pool
+            );
         }
-        return candidates.get(random.nextInt(candidates.size()));
+
+        return candidates.get(
+                random.nextInt(
+                        candidates.size()
+                )
+        );
     }
 
-    private static Component buildRoundMessage(FishingSession session) {
+    private static Component buildRoundMessage(
+            FishingSession session
+    ) {
         ChatFormatting color =
-                switch (session.challengeType()) {
+                switch (
+                        session.challengeType()
+                        ) {
+
                     case RARE ->
                             ChatFormatting.BLUE;
+
                     case ULTRA_RARE ->
                             ChatFormatting.AQUA;
+
                     case LEGENDARY ->
                             ChatFormatting.GOLD;
+
                     case MYTHICAL ->
                             ChatFormatting.LIGHT_PURPLE;
+
                     default ->
                             ChatFormatting.WHITE;
                 };
+
         String challengeName =
-                switch (session.challengeType()) {
+                switch (
+                        session.challengeType()
+                        ) {
+
                     case RARE ->
                             "Strong catch";
+
                     case ULTRA_RARE ->
                             "Powerful catch";
+
                     case LEGENDARY ->
                             "Legendary struggle";
+
                     case MYTHICAL ->
                             "Mythical struggle";
+
                     default ->
                             "Fishing";
                 };
-        return Component.literal(challengeName + "  •  Round " + session.currentRound() + "/" + session.totalRounds()).withStyle(color);
+
+        return Component
+                .literal(
+                        challengeName
+                                + "  •  Round "
+                                + session.currentRound()
+                                + "/"
+                                + session.totalRounds()
+                )
+                .withStyle(
+                        color
+                );
     }
 }

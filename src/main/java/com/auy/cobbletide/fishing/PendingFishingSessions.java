@@ -24,12 +24,18 @@ public final class PendingFishingSessions {
             UUID playerId,
             UUID bobberId,
             String rarity,
-            FishingChallengeType challengeType
+            FishingChallengeType challengeType,
+            float pokemonScale,
+            float sizeAreaMultiplier,
+            boolean alpha
     ) {
         FishingSession session = new FishingSession(
                 bobberId,
                 rarity,
-                challengeType
+                challengeType,
+                pokemonScale,
+                sizeAreaMultiplier,
+                alpha
         );
 
         ACTIVE.put(playerId, session);
