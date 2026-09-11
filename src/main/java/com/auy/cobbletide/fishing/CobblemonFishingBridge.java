@@ -24,6 +24,14 @@ import java.util.Locale;
 
 public final class CobblemonFishingBridge {
 
+    private static final float ALPHA_AREA_MULTIPLIER = 0.85F;
+
+    private static final float TINY_AREA_MULTIPLIER = 1.10F;
+    private static final float SMALL_AREA_MULTIPLIER = 1.05F;
+    private static final float NORMAL_AREA_MULTIPLIER = 1.00F;
+    private static final float LARGE_AREA_MULTIPLIER = 0.95F;
+    private static final float HUGE_AREA_MULTIPLIER = 0.90F;
+
     private static boolean registered = false;
 
     private CobblemonFishingBridge() {
@@ -160,6 +168,7 @@ public final class CobblemonFishingBridge {
                         "Challenge={} | " +
                         "Rounds={} | " +
                         "Scale={} | " +
+                        "SizeCategory={} | " +
                         "AreaMultiplier={} | " +
                         "Alpha={}",
                 player.getName().getString(),
@@ -168,6 +177,7 @@ public final class CobblemonFishingBridge {
                 challengeType,
                 session.totalRounds(),
                 sizeDifficulty.scale(),
+                sizeDifficulty.category(),
                 sizeDifficulty.areaMultiplier(),
                 sizeDifficulty.alpha()
         );
@@ -201,30 +211,29 @@ public final class CobblemonFishingBridge {
                         alphaValue
                 );
 
-        if (alpha) {
-            return new SizeDifficulty(
-                    1.0F,
-                    0.85F,
-                    true
-            );
-        }
+        float minimum =
+                Cobblemon.INSTANCE
+                        .getConfig()
+                        .getPokemonIntrinsicSizeMin();
+
+        float maximum =
+                Cobblemon.INSTANCE
+                        .getConfig()
+                        .getPokemonIntrinsicSizeMax();
 
         Float scale =
                 pokemonSpawn
                         .getProps()
                         .getScaleModifier();
 
+        /*
+         * Cobblemon normally generates intrinsic scale later when
+         * creating the Pokémon.
+         *
+         * We roll it now so the minigame difficulty can use the exact
+         * size that the resulting Pokémon will have.
+         */
         if (scale == null) {
-            float minimum =
-                    Cobblemon.INSTANCE
-                            .getConfig()
-                            .getPokemonIntrinsicSizeMin();
-
-            float maximum =
-                    Cobblemon.INSTANCE
-                            .getConfig()
-                            .getPokemonIntrinsicSizeMax();
-
             float rawScale =
                     minimum
                             + bobber.getRandom().nextFloat()
@@ -235,14 +244,6 @@ public final class CobblemonFishingBridge {
                             rawScale
                     );
 
-            /*
-             * Setting this now is important.
-             *
-             * Cobblemon only rolls intrinsic scale when
-             * PokemonProperties.scaleModifier is null.
-             * Therefore the Pokémon we eventually reel up
-             * keeps this exact size.
-             */
             pokemonSpawn
                     .getProps()
                     .setScaleModifier(
@@ -250,10 +251,36 @@ public final class CobblemonFishingBridge {
                     );
         }
 
+        SizeCategory sizeCategory =
+                determineSizeCategory(
+                        scale,
+                        minimum,
+                        maximum
+                );
+
+        float sizeMultiplier =
+                getAreaMultiplierForCategory(
+                        sizeCategory
+                );
+
+        /*
+         * Alpha is an additional difficulty modifier.
+         *
+         * It no longer replaces intrinsic size difficulty, meaning:
+         *
+         * tiny alpha  -> easier size modifier, then alpha penalty
+         * huge alpha  -> harder size modifier, then alpha penalty
+         */
+        float finalMultiplier =
+                alpha
+                        ? sizeMultiplier * ALPHA_AREA_MULTIPLIER
+                        : sizeMultiplier;
+
         return new SizeDifficulty(
                 scale,
-                getAreaMultiplierForScale(scale),
-                false
+                finalMultiplier,
+                alpha,
+                sizeCategory
         );
     }
 
@@ -271,33 +298,91 @@ public final class CobblemonFishingBridge {
                 + roundedPercent / 100.0F;
     }
 
-    private static float getAreaMultiplierForScale(
-            float scale
+    private static SizeCategory determineSizeCategory(
+            float scale,
+            float minimum,
+            float maximum
     ) {
-        if (scale <= 0.96F) {
-            return 1.08F;
+        /*
+         * Protect against an invalid/custom config where the
+         * intrinsic size range has no usable width.
+         */
+        if (maximum <= minimum) {
+            return SizeCategory.NORMAL;
         }
 
-        if (scale < 0.99F) {
-            return 1.04F;
+        float normalized =
+                (scale - minimum)
+                        / (maximum - minimum);
+
+        normalized =
+                Math.max(
+                        0.0F,
+                        Math.min(
+                                1.0F,
+                                normalized
+                        )
+                );
+
+        /*
+         * Split whatever intrinsic size range Cobblemon is configured
+         * to use into five equal relative categories.
+         *
+         * 0% - 20%   = tiny
+         * 20% - 40%  = small
+         * 40% - 60%  = normal
+         * 60% - 80%  = large
+         * 80% - 100% = huge
+         */
+        if (normalized < 0.20F) {
+            return SizeCategory.TINY;
         }
 
-        if (scale <= 1.01F) {
-            return 1.00F;
+        if (normalized < 0.40F) {
+            return SizeCategory.SMALL;
         }
 
-        if (scale < 1.04F) {
-            return 0.96F;
+        if (normalized < 0.60F) {
+            return SizeCategory.NORMAL;
         }
 
-        return 0.92F;
+        if (normalized < 0.80F) {
+            return SizeCategory.LARGE;
+        }
+
+        return SizeCategory.HUGE;
+    }
+
+    private static float getAreaMultiplierForCategory(
+            SizeCategory category
+    ) {
+        return switch (category) {
+
+            case TINY ->
+                    TINY_AREA_MULTIPLIER;
+
+            case SMALL ->
+                    SMALL_AREA_MULTIPLIER;
+
+            case NORMAL ->
+                    NORMAL_AREA_MULTIPLIER;
+
+            case LARGE ->
+                    LARGE_AREA_MULTIPLIER;
+
+            case HUGE ->
+                    HUGE_AREA_MULTIPLIER;
+        };
     }
 
     private static FishingChallengeType determineChallengeType(
             SpawnAction<?> plannedSpawn,
             String rarity
     ) {
-        // Mythical/legendary labels override the normal fishing rarity.
+        /*
+         * Mythical and legendary labels override the normal
+         * fishing rarity.
+         */
         Species species =
                 getPlannedSpecies(
                         plannedSpawn
@@ -492,16 +577,26 @@ public final class CobblemonFishingBridge {
         }
     }
 
+    private enum SizeCategory {
+        TINY,
+        SMALL,
+        NORMAL,
+        LARGE,
+        HUGE
+    }
+
     private record SizeDifficulty(
             float scale,
             float areaMultiplier,
-            boolean alpha
+            boolean alpha,
+            SizeCategory category
     ) {
         private static final SizeDifficulty NORMAL =
                 new SizeDifficulty(
                         1.0F,
                         1.0F,
-                        false
+                        false,
+                        SizeCategory.NORMAL
                 );
     }
 }

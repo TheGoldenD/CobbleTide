@@ -22,60 +22,212 @@ public final class FishingChallengeManager {
     private FishingChallengeManager() {
     }
 
+    /*
+     * Rare / Ultra Rare pools.
+     *
+     * These have been softened slightly from the original values:
+     * wider success areas and slightly slower movement.
+     */
     private static final List<FishingChallengePreset> ULTRA_EARLY =
             List.of(
-                    new FishingChallengePreset("ultra_sweep", MinigameBehavior.SINE, 0.20f, 0.085f),
-                    new FishingChallengePreset("ultra_linear", MinigameBehavior.LINEAR, 0.19f, 0.090f),
-                    new FishingChallengePreset("ultra_plateau", MinigameBehavior.PLATEAU, 0.18f, 0.090f),
-                    new FishingChallengePreset("ultra_jitter", MinigameBehavior.JITTER, 0.19f, 0.085f)
+                    new FishingChallengePreset(
+                            "ultra_sweep",
+                            MinigameBehavior.SINE,
+                            0.24f,
+                            0.080f
+                    ),
+                    new FishingChallengePreset(
+                            "ultra_linear",
+                            MinigameBehavior.LINEAR,
+                            0.23f,
+                            0.085f
+                    ),
+                    new FishingChallengePreset(
+                            "ultra_plateau",
+                            MinigameBehavior.PLATEAU,
+                            0.22f,
+                            0.085f
+                    ),
+                    new FishingChallengePreset(
+                            "ultra_jitter",
+                            MinigameBehavior.JITTER,
+                            0.23f,
+                            0.080f
+                    )
             );
 
     private static final List<FishingChallengePreset> ULTRA_FINAL =
             List.of(
-                    new FishingChallengePreset("ultra_darts", MinigameBehavior.DARTS, 0.15f, 0.105f),
-                    new FishingChallengePreset("ultra_tight_jitter", MinigameBehavior.JITTER, 0.15f, 0.100f),
-                    new FishingChallengePreset("ultra_wrap", MinigameBehavior.LINEAR_WRAP, 0.16f, 0.100f),
-                    new FishingChallengePreset("ultra_tight_plateau", MinigameBehavior.PLATEAU, 0.14f, 0.100f)
+                    new FishingChallengePreset(
+                            "ultra_darts",
+                            MinigameBehavior.DARTS,
+                            0.19f,
+                            0.100f
+                    ),
+                    new FishingChallengePreset(
+                            "ultra_tight_jitter",
+                            MinigameBehavior.JITTER,
+                            0.19f,
+                            0.095f
+                    ),
+                    new FishingChallengePreset(
+                            "ultra_wrap",
+                            MinigameBehavior.LINEAR_WRAP,
+                            0.20f,
+                            0.095f
+                    ),
+                    new FishingChallengePreset(
+                            "ultra_tight_plateau",
+                            MinigameBehavior.PLATEAU,
+                            0.18f,
+                            0.095f
+                    )
             );
 
+    /*
+     * Legendary / Mythical progression.
+     *
+     * Difficulty still increases round-by-round, but each stage
+     * gives the player slightly more room than before.
+     */
     private static final List<FishingChallengePreset> BOSS_EARLY =
             List.of(
-                    new FishingChallengePreset("sweeping_pull", MinigameBehavior.SINE, 0.20f, 0.090f),
-                    new FishingChallengePreset("steady_pull", MinigameBehavior.LINEAR, 0.19f, 0.095f),
-                    new FishingChallengePreset("heavy_drag", MinigameBehavior.PLATEAU, 0.19f, 0.090f),
-                    new FishingChallengePreset("light_jitter", MinigameBehavior.JITTER, 0.20f, 0.085f)
+                    new FishingChallengePreset(
+                            "sweeping_pull",
+                            MinigameBehavior.SINE,
+                            0.24f,
+                            0.085f
+                    ),
+                    new FishingChallengePreset(
+                            "steady_pull",
+                            MinigameBehavior.LINEAR,
+                            0.23f,
+                            0.090f
+                    ),
+                    new FishingChallengePreset(
+                            "heavy_drag",
+                            MinigameBehavior.PLATEAU,
+                            0.23f,
+                            0.085f
+                    ),
+                    new FishingChallengePreset(
+                            "light_jitter",
+                            MinigameBehavior.JITTER,
+                            0.24f,
+                            0.080f
+                    )
             );
 
     private static final List<FishingChallengePreset> BOSS_MID =
             List.of(
-                    new FishingChallengePreset("jitter_pulse", MinigameBehavior.JITTER, 0.17f, 0.100f),
-                    new FishingChallengePreset("darting_pull", MinigameBehavior.DARTS, 0.17f, 0.105f),
-                    new FishingChallengePreset("plateau_surge", MinigameBehavior.PLATEAU, 0.16f, 0.105f),
-                    new FishingChallengePreset("wrapping_pull", MinigameBehavior.LINEAR_WRAP, 0.18f, 0.100f)
+                    new FishingChallengePreset(
+                            "jitter_pulse",
+                            MinigameBehavior.JITTER,
+                            0.20f,
+                            0.095f
+                    ),
+                    new FishingChallengePreset(
+                            "darting_pull",
+                            MinigameBehavior.DARTS,
+                            0.20f,
+                            0.100f
+                    ),
+                    new FishingChallengePreset(
+                            "plateau_surge",
+                            MinigameBehavior.PLATEAU,
+                            0.19f,
+                            0.100f
+                    ),
+                    new FishingChallengePreset(
+                            "wrapping_pull",
+                            MinigameBehavior.LINEAR_WRAP,
+                            0.21f,
+                            0.095f
+                    )
             );
 
     private static final List<FishingChallengePreset> BOSS_HARD =
             List.of(
-                    new FishingChallengePreset("tight_jitter", MinigameBehavior.JITTER, 0.14f, 0.115f),
-                    new FishingChallengePreset("fast_darts", MinigameBehavior.DARTS, 0.14f, 0.120f),
-                    new FishingChallengePreset("wrap_strike", MinigameBehavior.LINEAR_WRAP, 0.15f, 0.115f),
-                    new FishingChallengePreset("tight_plateau", MinigameBehavior.PLATEAU, 0.13f, 0.110f)
+                    new FishingChallengePreset(
+                            "tight_jitter",
+                            MinigameBehavior.JITTER,
+                            0.17f,
+                            0.105f
+                    ),
+                    new FishingChallengePreset(
+                            "fast_darts",
+                            MinigameBehavior.DARTS,
+                            0.17f,
+                            0.110f
+                    ),
+                    new FishingChallengePreset(
+                            "wrap_strike",
+                            MinigameBehavior.LINEAR_WRAP,
+                            0.18f,
+                            0.105f
+                    ),
+                    new FishingChallengePreset(
+                            "tight_plateau",
+                            MinigameBehavior.PLATEAU,
+                            0.16f,
+                            0.100f
+                    )
             );
 
     private static final List<FishingChallengePreset> BOSS_FINAL =
             List.of(
-                    new FishingChallengePreset("final_jitter", MinigameBehavior.JITTER, 0.11f, 0.125f),
-                    new FishingChallengePreset("final_darts", MinigameBehavior.DARTS, 0.11f, 0.135f),
-                    new FishingChallengePreset("final_wrap", MinigameBehavior.LINEAR_WRAP, 0.12f, 0.130f),
-                    new FishingChallengePreset("final_plateau", MinigameBehavior.PLATEAU, 0.10f, 0.120f)
+                    new FishingChallengePreset(
+                            "final_jitter",
+                            MinigameBehavior.JITTER,
+                            0.14f,
+                            0.115f
+                    ),
+                    new FishingChallengePreset(
+                            "final_darts",
+                            MinigameBehavior.DARTS,
+                            0.14f,
+                            0.125f
+                    ),
+                    new FishingChallengePreset(
+                            "final_wrap",
+                            MinigameBehavior.LINEAR_WRAP,
+                            0.15f,
+                            0.120f
+                    ),
+                    new FishingChallengePreset(
+                            "final_plateau",
+                            MinigameBehavior.PLATEAU,
+                            0.13f,
+                            0.110f
+                    )
             );
 
     private static final List<FishingChallengePreset> MYTHICAL_FINAL =
             List.of(
-                    new FishingChallengePreset("mythical_jitter", MinigameBehavior.JITTER, 0.090f, 0.140f),
-                    new FishingChallengePreset("mythical_darts", MinigameBehavior.DARTS, 0.090f, 0.150f),
-                    new FishingChallengePreset("mythical_wrap", MinigameBehavior.LINEAR_WRAP, 0.100f, 0.145f),
-                    new FishingChallengePreset("mythical_plateau", MinigameBehavior.PLATEAU, 0.085f, 0.135f)
+                    new FishingChallengePreset(
+                            "mythical_jitter",
+                            MinigameBehavior.JITTER,
+                            0.115f,
+                            0.130f
+                    ),
+                    new FishingChallengePreset(
+                            "mythical_darts",
+                            MinigameBehavior.DARTS,
+                            0.115f,
+                            0.140f
+                    ),
+                    new FishingChallengePreset(
+                            "mythical_wrap",
+                            MinigameBehavior.LINEAR_WRAP,
+                            0.125f,
+                            0.135f
+                    ),
+                    new FishingChallengePreset(
+                            "mythical_plateau",
+                            MinigameBehavior.PLATEAU,
+                            0.110f,
+                            0.125f
+                    )
             );
 
     public static void startCurrentRound(
@@ -131,6 +283,7 @@ public final class FishingChallengeManager {
                         "BaseArea={} | " +
                         "AdjustedArea={} | " +
                         "Scale={} | " +
+                        "Alpha={} | " +
                         "Speed={}",
                 player.getName().getString(),
                 session.challengeType(),
@@ -141,6 +294,7 @@ public final class FishingChallengeManager {
                 preset.area(),
                 adjustedArea,
                 session.pokemonScale(),
+                session.alpha(),
                 preset.speed()
         );
     }
