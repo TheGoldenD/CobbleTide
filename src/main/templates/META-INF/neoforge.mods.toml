@@ -14,16 +14,16 @@ authors="Au_Y"
 description='''
 Example mod description.
 '''
-[[dependencies.${mod_id}]] #optional
-    modId="neoforge" #mandatory
-    type="required" #mandatory
-    versionRange="[${neo_version},)" #mandatory
-    ordering="NONE"
-    side="BOTH"
+[[dependencies.${mod_id}]]
+modId="cobblemon"
+type="required"
+versionRange="[1.8.0,1.9.0)"
+ordering="AFTER"
+side="BOTH"
 
 [[dependencies.${mod_id}]]
-    modId="minecraft"
-    type="required"
-    versionRange="${minecraft_version_range}"
-    ordering="NONE"
-    side="BOTH"
+modId="tide"
+type="required"
+versionRange="[2.1.1,2.2.0)"
+ordering="AFTER"
+side="BOTH"
